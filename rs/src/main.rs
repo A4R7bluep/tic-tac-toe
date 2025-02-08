@@ -1,35 +1,26 @@
-use std::fmt;
 use termion::color;
 
-// #[derive(Copy, Clone)]
-#[derive(Debug)]
-enum Player {
-    Player1,
-    Player2,
-}
-impl fmt::Display for Player {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 fn print_board(board: &[[char; 3]; 3]) {
+    use termion::color;
+    println!("{}Welcome to Tic-Tac-Toe!{}", color::Fg(color::LightGreen), color::Fg(color::Reset));
+    println!();
     for item_x in board {
         for item_y in item_x {
             print!("{} ", item_y);
         }
         println!();
     }
+    println!();
 }
 
-fn take_turn(cur_player: &mut Player, board: &mut [[char; 3]; 3]) {
+fn take_turn(turn_num: i32, board: &mut [[char; 3]; 3]) {
     use termion::color;
     use text_io::read;
 
     println!(
-        "{}{}'s turn{}",
+        "{}Player {}'s turn{}",
         color::Fg(color::LightBlue),
-        cur_player,
+        (turn_num % 2) + 1,
         color::Fg(color::Reset)
     );
     print!("X position (0 to 2): ");
@@ -50,14 +41,25 @@ fn take_turn(cur_player: &mut Player, board: &mut [[char; 3]; 3]) {
         y_pos = read!();
     }
 
-    match cur_player {
-        Player::Player1 => {
-            board[y_pos][x_pos] = 'X';
-            *cur_player = Player::Player2;
+    match turn_num % 2 {
+        0 => {
+            if board[y_pos][x_pos] == '_' {
+                board[y_pos][x_pos] = 'X';
+            } else {
+                println!("\n{}Area not empty{}", color::Fg(color::Red), color::Fg(color::Reset));
+                take_turn(turn_num, board);
+            }
         }
-        Player::Player2 => {
-            board[y_pos][x_pos] = 'O';
-            *cur_player = Player::Player1;
+        1 => {
+            if board[y_pos][x_pos] == '_' {
+                board[y_pos][x_pos] = 'O';
+            } else {
+                println!("\n{}Area not empty{}", color::Fg(color::Red), color::Fg(color::Reset));
+                take_turn(turn_num, board);
+            }
+        }
+        _ => {
+            println!("Erroneous turn number");
         }
     }
 }
@@ -95,26 +97,26 @@ fn has_won(board: &[[char; 3]; 3]) -> bool {
     if board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != '_' {
         return true;
     }
-    
+
     false
 }
 
 fn main() {
-    let mut cur_player: Player = Player::Player1;
-    let mut board: [[char; 3]; 3] = [
-        ['_', '_', '_'], 
-        ['_', '_', '_'], 
-        ['_', '_', '_']];
+    let mut turn_num: i32 = 0;
+    let mut board: [[char; 3]; 3] = [['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']];
+
+    print_board(&board);
 
     while !has_won(&board) {
-        take_turn(&mut cur_player, &mut board);
+        take_turn(turn_num, &mut board);
         print_board(&board);
+        turn_num += 1;
     }
 
     println!(
-        "{}{} won!{}",
+        "{}Player {} won!{}",
         color::Fg(color::LightGreen),
-        cur_player,
+        turn_num % 2,
         color::Fg(color::Reset)
     );
 }
